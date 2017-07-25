@@ -10,10 +10,10 @@ namespace ImportMultipleGitReposInVsts
 {
     class Program
     {
-        const string tpc_ClientSystems = "ClientSystems";
-        const string tpc_Clients = "Clients";
-        const string tpc_ClientsDefaultTp = "Default";
-        const string tpc_ClientsDefaultTpProjectId = "06d14553-50c4-4803-88a3-0e600420c6b5";
+        const string SourceTeamProjectCollection = "DefaultCollection";
+        const string TargetTeamProjectCollection = "testcoll";
+        const string TargetTeamProject = "testtp";
+        const string TargetTeamProjectId = "da7201ca-2328-4385-bca2-d2698b141cc6";
 
         static void Main(string[] args)
         {
@@ -25,7 +25,7 @@ namespace ImportMultipleGitReposInVsts
             }
 
             //WriteSampleImportFile();
-            ImportReposFromFile();
+            //ImportReposFromFile();
 
             WriteLine();
             WriteLine();
@@ -102,7 +102,7 @@ namespace ImportMultipleGitReposInVsts
 
         private static CreateImportRequestResponse CreateImportRequest(string remoteUrl, string newRepoName, CreateServiceEndpointResponse serviceEndPointResponse)
         {
-            return TfsStatic.CreateImportRequest(tpc_Clients, tpc_ClientsDefaultTp, newRepoName, new CreateImportRequestRequest
+            return TfsStatic.CreateImportRequest(TargetTeamProjectCollection, TargetTeamProject, newRepoName, new CreateImportRequestRequest
             {
                 parameters = new CreateImportRequestRequest_Parameters
                 {
@@ -118,19 +118,19 @@ namespace ImportMultipleGitReposInVsts
 
         private static CreateRepoResponse CreateRepo(string newRepoName)
         {
-            return TfsStatic.CreateRepo(tpc_Clients, new CreateRepoRequest
+            return TfsStatic.CreateRepo(TargetTeamProjectCollection, new CreateRepoRequest
             {
                 name = newRepoName,
                 project = new CreateRepoRequest_Project
                 {
-                    id = tpc_ClientsDefaultTpProjectId,
+                    id = TargetTeamProjectId,
                 }
             });
         }
 
         private static CreateServiceEndpointResponse CreateServiceEndPoint(string remoteUrl, string newRepoName)
         {
-            return TfsStatic.CreateServiceEndpoint(tpc_Clients, tpc_ClientsDefaultTp, new CreateServiceEndpointRequest
+            return TfsStatic.CreateServiceEndpoint(TargetTeamProjectCollection, TargetTeamProject, new CreateServiceEndpointRequest
             {
                 authorization = new CreateServiceEndpointRequest_Authorization
                 {
@@ -150,7 +150,7 @@ namespace ImportMultipleGitReposInVsts
         private static void WriteSampleImportFile()
         {
             var output = string.Empty;
-            var repos = TfsStatic.GetGitRepos(tpc_ClientSystems);
+            var repos = TfsStatic.GetGitRepos(SourceTeamProjectCollection);
             foreach (var repo in repos.value.OrderBy(o => o.magic_repo_name))
             {
                 WriteLine(repo.magic_repo_name);
