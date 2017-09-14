@@ -10,21 +10,21 @@ namespace ImportMultipleGitReposInVsts
 {
     class Program
     {
-        const string SourceTeamProjectCollection = "DefaultCollection";
-        const string TargetTeamProjectCollection = "testcoll";
-        const string TargetTeamProject = "testtp";
-        const string TargetTeamProjectId = "da7201ca-2328-4385-bca2-d2698b141cc6";
+        const string SourceTeamProjectCollection = "NologoProducts";
+        const string TargetTeamProjectCollection = "Clients";
+        const string TargetTeamProject = "Default";
+        const string TargetTeamProjectId = "06d14553-50c4-4803-88a3-0e600420c6b5";
 
         static void Main(string[] args)
         {
-            TfsStatic.BaseUri = "https://{account}";
+            TfsStatic.BaseUri = "http://tfs.nologo.co.za:8082/tfs/";
             SetConsoleThings();
             if (!GetPatToken())
             {
                 return;
             }
 
-            //WriteSampleImportFile();
+            WriteSampleImportFile();
             //ImportReposFromFile();
 
             WriteLine();
