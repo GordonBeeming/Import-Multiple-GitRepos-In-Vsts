@@ -113,7 +113,7 @@ namespace ImportMultipleGitReposInVsts
                     var responseString = sr.ReadToEnd();
                     var exception = JsonConvert.DeserializeObject<RestCallException>(responseString);
                     //throw new Exception($"{exception.message} | {uri}");
-                    throw new Exception(exception.message);
+                    throw new Exception(exception?.message ?? webEx.Message);
                 }
             }
         }
@@ -187,7 +187,7 @@ namespace ImportMultipleGitReposInVsts
 
         public static CreateImportRequestResponse CreateImportRequest(bool source, string repoName, CreateImportRequestRequest request)
         {
-            return Post<CreateImportRequestResponse>(GetUrl(source,false,$"/_apis/git/repositories/{repoName}/importRequests?api-version=3.0-preview"), request, GetAuthorizationHeader(source));
+            return Post<CreateImportRequestResponse>(GetUrl(source,false,$"/_apis/git/repositories/{repoName}/importRequests?api-version=5.0-preview.1"), request, GetAuthorizationHeader(source));
         }
 
         public static string GetUrl(bool source, bool excludeProject, string uriRelativeToRoot)
@@ -197,14 +197,14 @@ namespace ImportMultipleGitReposInVsts
             {
                 baseUri = baseUri.Remove(baseUri.LastIndexOf('/'));
             }
-            return $"{baseUri}{uriRelativeToRoot}".Replace("//", "/");
+            return $"{baseUri}{uriRelativeToRoot.Replace("//", "/")}";
         }
 
         public static string GetTeamProjectId(bool source)
         {
             var baseUri = source ? SourceTeamProjectBaseUri : TargetTeamProjectBaseUri;
             var teamProjectName = baseUri.Remove(0, baseUri.LastIndexOf('/') + 1);
-            var projects = Get<GetProjects>(GetUrl(source, true, $"_apis/projects?api-version=2.0"), GetAuthorizationHeader(source));
+            var projects = Get<GetProjects>(GetUrl(source, true, $"/_apis/projects?api-version=2.0"), GetAuthorizationHeader(source));
             foreach (var item in projects.value)
             {
                 if (item.name.Equals(teamProjectName, StringComparison.InvariantCultureIgnoreCase))

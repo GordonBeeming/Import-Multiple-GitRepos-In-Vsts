@@ -12,8 +12,8 @@ namespace ImportMultipleGitReposInVsts
     {
         static void Main(string[] args)
         {
-            TfsStatic.SourceTeamProjectBaseUri = "https://tfs.nologo.co.za:8083/tfs/Clients/Default";
-            TfsStatic.TargetTeamProjectBaseUri = "https://dev.azure.com/nls-code-backup/20190723";
+            TfsStatic.SourceTeamProjectBaseUri = "https://dev.azure.com/source account/source team project";
+            TfsStatic.TargetTeamProjectBaseUri = "https://dev.azure.com/target account/target team project";
             SetConsoleThings();
             if (!GetPatToken())
             {
@@ -35,6 +35,8 @@ namespace ImportMultipleGitReposInVsts
             Console.WriteLine("PAT keys can be generated in TFS, keep this safe. With this key we are able to impersonate you using the TFS API's.");
             Console.WriteLine("Steps to create: https://www.visualstudio.com/en-us/docs/setup-admin/team-services/use-personal-access-tokens-to-authenticate");
             Console.WriteLine("TFS Uri: https://{account}/{tpc}/_details/security/tokens");
+            Console.WriteLine();
+            Console.WriteLine($"Source: {TfsStatic.SourceTeamProjectBaseUri}");
             Console.Write("Enter you Source PAT key: ");
             TfsStatic.SourcePatKey = Console.ReadLine();
             if ((TfsStatic.SourcePatKey?.Trim() ?? string.Empty).Length == 0)
@@ -44,6 +46,7 @@ namespace ImportMultipleGitReposInVsts
                 Console.ReadLine();
                 return false;
             }
+            Console.WriteLine($"Target: {TfsStatic.TargetTeamProjectBaseUri}");
             Console.Write("Enter you Target PAT key: ");
             TfsStatic.TargetPatKey = Console.ReadLine();
             if ((TfsStatic.TargetPatKey?.Trim() ?? string.Empty).Length == 0)
@@ -81,6 +84,7 @@ namespace ImportMultipleGitReposInVsts
         private static void ImportReposFromFile()
         {
             var inputLines = File.ReadAllLines(".\\input.txt");
+            var errorLines = new List<string>();
             foreach (var line in inputLines.Select(o => o.Trim()).Where(o => !o.StartsWith("#") && o.Length > 0))
             {
                 var lineSplit = line.Split('\t');
@@ -98,11 +102,13 @@ namespace ImportMultipleGitReposInVsts
                     Write($"import request created...", ConsoleColor.Green);
                     WriteLine($"done!", ConsoleColor.Green);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    WriteLine($"failed!", ConsoleColor.Red);
+                    errorLines.Add(line);
+                    WriteLine($"failed! - {ex.Message}", ConsoleColor.Red);
                 }
             }
+            File.WriteAllText(".\\errors.txt", string.Join(Environment.NewLine, errorLines));
         }
 
         private static CreateImportRequestResponse CreateImportRequest(string remoteUrl, string newRepoName, CreateServiceEndpointResponse serviceEndPointResponse)
