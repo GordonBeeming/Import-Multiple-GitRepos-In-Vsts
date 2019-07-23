@@ -10,14 +10,10 @@ namespace ImportMultipleGitReposInVsts
 {
     class Program
     {
-        const string SourceTeamProjectCollection = "NologoProducts";
-        const string TargetTeamProjectCollection = "Clients";
-        const string TargetTeamProject = "Default";
-        const string TargetTeamProjectId = "06d14553-50c4-4803-88a3-0e600420c6b5";
-
         static void Main(string[] args)
         {
-            TfsStatic.BaseUri = "http://tfs.nologo.co.za:8082/tfs/";
+            TfsStatic.SourceTeamProjectBaseUri = "https://tfs.nologo.co.za:8083/tfs/Clients/Default";
+            TfsStatic.TargetTeamProjectBaseUri = "https://dev.azure.com/nls-code-backup/20190723";
             SetConsoleThings();
             if (!GetPatToken())
             {
@@ -39,9 +35,18 @@ namespace ImportMultipleGitReposInVsts
             Console.WriteLine("PAT keys can be generated in TFS, keep this safe. With this key we are able to impersonate you using the TFS API's.");
             Console.WriteLine("Steps to create: https://www.visualstudio.com/en-us/docs/setup-admin/team-services/use-personal-access-tokens-to-authenticate");
             Console.WriteLine("TFS Uri: https://{account}/{tpc}/_details/security/tokens");
-            Console.Write("Enter you PAT key: ");
-            TfsStatic.PatKey = Console.ReadLine();
-            if ((TfsStatic.PatKey?.Trim() ?? string.Empty).Length == 0)
+            Console.Write("Enter you Source PAT key: ");
+            TfsStatic.SourcePatKey = Console.ReadLine();
+            if ((TfsStatic.SourcePatKey?.Trim() ?? string.Empty).Length == 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Seems you didn't supply a key.");
+                Console.ReadLine();
+                return false;
+            }
+            Console.Write("Enter you Target PAT key: ");
+            TfsStatic.TargetPatKey = Console.ReadLine();
+            if ((TfsStatic.TargetPatKey?.Trim() ?? string.Empty).Length == 0)
             {
                 Console.WriteLine();
                 Console.WriteLine("Seems you didn't supply a key.");
@@ -102,7 +107,7 @@ namespace ImportMultipleGitReposInVsts
 
         private static CreateImportRequestResponse CreateImportRequest(string remoteUrl, string newRepoName, CreateServiceEndpointResponse serviceEndPointResponse)
         {
-            return TfsStatic.CreateImportRequest(TargetTeamProjectCollection, TargetTeamProject, newRepoName, new CreateImportRequestRequest
+            return TfsStatic.CreateImportRequest(false, newRepoName, new CreateImportRequestRequest
             {
                 parameters = new CreateImportRequestRequest_Parameters
                 {
@@ -118,19 +123,19 @@ namespace ImportMultipleGitReposInVsts
 
         private static CreateRepoResponse CreateRepo(string newRepoName)
         {
-            return TfsStatic.CreateRepo(TargetTeamProjectCollection, new CreateRepoRequest
+            return TfsStatic.CreateRepo(false, new CreateRepoRequest
             {
                 name = newRepoName,
                 project = new CreateRepoRequest_Project
                 {
-                    id = TargetTeamProjectId,
+                    id = TfsStatic.GetTeamProjectId(false),
                 }
             });
         }
 
         private static CreateServiceEndpointResponse CreateServiceEndPoint(string remoteUrl, string newRepoName)
         {
-            return TfsStatic.CreateServiceEndpoint(TargetTeamProjectCollection, TargetTeamProject, new CreateServiceEndpointRequest
+            return TfsStatic.CreateServiceEndpoint(false, new CreateServiceEndpointRequest
             {
                 authorization = new CreateServiceEndpointRequest_Authorization
                 {
@@ -138,7 +143,7 @@ namespace ImportMultipleGitReposInVsts
                     parameters = new CreateServiceEndpointRequest_Parameters
                     {
                         username = "",
-                        password = TfsStatic.PatKey,
+                        password = TfsStatic.SourcePatKey,
                     }
                 },
                 name = $"Import-{newRepoName.Replace(" ", "-")}-{Guid.NewGuid()}-Git",
@@ -150,7 +155,7 @@ namespace ImportMultipleGitReposInVsts
         private static void WriteSampleImportFile()
         {
             var output = string.Empty;
-            var repos = TfsStatic.GetGitRepos(SourceTeamProjectCollection);
+            var repos = TfsStatic.GetGitRepos(true);
             foreach (var repo in repos.value.OrderBy(o => o.magic_repo_name))
             {
                 WriteLine(repo.magic_repo_name);
